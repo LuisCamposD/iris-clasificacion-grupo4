@@ -74,6 +74,7 @@ elif pagina == "Predicciones":
     )
 
     if st.button("Predecir"):
+        # Elegir modelo
         if modelo_nombre == "KNN":
             modelo = knn
         elif modelo_nombre == "SVM":
@@ -81,26 +82,23 @@ elif pagina == "Predicciones":
         else:
             modelo = arbol
 
+        # Predicción principal
         pred = modelo.predict(X_nuevo)[0]
         especie = iris.target_names[pred]
-
         st.success(f"✅ Predicción: **{especie}**")
 
-if hasattr(modelo, "predict_proba"):
-    # Probabilidades que devuelve el modelo para este ejemplo
-    proba = modelo.predict_proba(X_nuevo)[0]   # array de longitud = nº de clases del modelo
+        # Probabilidades por clase (solo si el modelo las soporta)
+        if hasattr(modelo, "predict_proba"):
+            proba = modelo.predict_proba(X_nuevo)[0]
+            class_indices = modelo.classes_
+            class_names = [iris.target_names[i] for i in class_indices]
 
-    # Nombres de las clases que realmente usa el modelo
-    class_indices = modelo.classes_            # ej. [0, 1] o [0, 1, 2]
-    class_names = [iris.target_names[i] for i in class_indices]
+            proba_df = pd.DataFrame({
+                "Clase": class_names,
+                "Probabilidad": proba
+            }).set_index("Clase")
 
-    # Armamos un DataFrame limpio para el gráfico
-    proba_df = pd.DataFrame({
-        "Clase": class_names,
-        "Probabilidad": proba
-    }).set_index("Clase")
-
-    st.write("Probabilidades por clase:")
-    st.bar_chart(proba_df["Probabilidad"])
-
-
+            st.write("Probabilidades por clase:")
+            st.bar_chart(proba_df["Probabilidad"])
+        else:
+            st.info("Este modelo no entrega probabilidades (`predict_proba`).")
