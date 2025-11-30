@@ -3,7 +3,7 @@ import pandas as pd
 import joblib
 from sklearn.datasets import load_iris
 from sklearn.metrics import accuracy_score, confusion_matrix
-import matplotlib.pyplot as plt
+import altair as alt
 
 # ------------------ CONFIGURACIÓN GENERAL ------------------
 st.set_page_config(
@@ -84,7 +84,7 @@ if pagina == "Glosario":
            Encuentra el hiperplano que mejor separa las clases en el espacio de características.
 
         4. **Árbol de decisión**  
-           Modelo basado en preguntas tipo árbol sobre las variables (¿petal length > X?).
+           Modelo basado en preguntas tipo árbol sobre las variables.
 
         5. **Accuracy**  
            Porcentaje de predicciones correctas sobre el total de muestras.
@@ -145,30 +145,41 @@ elif pagina == "Modelos y desempeño":
 
     st.markdown("---")
 
-    # Matriz de confusión
+    # Matriz de confusión (tabla + heatmap Altair)
     st.subheader("Matriz de confusión")
+
     cm = confusion_matrix(y, y_pred, labels=modelo.classes_)
     etiquetas = [iris.target_names[i] for i in modelo.classes_]
 
-    fig, ax = plt.subplots()
-    ax.imshow(cm)
+    cm_df = pd.DataFrame(cm, index=etiquetas, columns=etiquetas)
+    cm_df.index.name = "Real"
+    cm_df.columns.name = "Predicción"
 
-    ax.set_xticks(range(len(etiquetas)))
-    ax.set_yticks(range(len(etiquetas)))
-    ax.set_xticklabels(etiquetas, rotation=45, ha="right")
-    ax.set_yticklabels(etiquetas)
-    ax.set_xlabel("Predicción")
-    ax.set_ylabel("Real")
+    st.write("Tabla:")
+    st.dataframe(cm_df)
 
-    for i in range(cm.shape[0]):
-        for j in range(cm.shape[1]):
-            ax.text(j, i, cm[i, j], ha="center", va="center")
-
-    st.pyplot(fig)
-
-    st.caption(
-        "Diagonal = aciertos. Valores fuera de la diagonal = errores de clasificación."
+    st.write("Heatmap:")
+    cm_long = cm_df.reset_index().melt(
+        id_vars="Real",
+        var_name="Predicción",
+        value_name="Muestras"
     )
+
+    heatmap = (
+        alt.Chart(cm_long)
+        .mark_rect()
+        .encode(
+            x=alt.X("Predicción:N"),
+            y=alt.Y("Real:N"),
+            color=alt.Color("Muestras:Q", scale=alt.Scale(scheme="blues")),
+            tooltip=["Real", "Predicción", "Muestras"]
+        )
+        .properties(height=400)
+    )
+
+    st.altair_chart(heatmap, use_container_width=True)
+
+    st.caption("La diagonal son aciertos; los valores fuera de la diagonal son errores de clasificación.")
 
 
 # ------------------ PREDICCIONES ------------------
@@ -232,19 +243,20 @@ elif pagina == "Predicciones":
 
             if hasattr(m, "predict_proba"):
                 proba_m = m.predict_proba(X_nuevo)[0]
-                proba_clase = max(proba_m)   # prob. de la clase predicha
+                proba_clase = float(max(proba_m))
+                proba_str = f"{proba_clase:.3f}"
             else:
-                proba_clase = None
+                proba_str = "N/A"
 
             filas.append({
                 "Modelo": nombre,
                 "Especie predicha": especie_m,
-                "Probabilidad máx.": f"{proba_clase:.3f}" if proba_clase is not None else "N/A"
+                "Probabilidad máx.": proba_str
             })
 
         resultados_df = pd.DataFrame(filas)
-        st.dataframe(resultados_df, hide_index=True)
+        st.dataframe(resultados_df)
 
         st.caption(
-            "Así puedes ver cuándo los modelos coinciden y cuándo discrepan para la misma flor."
+            "Aquí ves si los modelos coinciden o discrepan para la misma flor y cuán seguros están."
         )
