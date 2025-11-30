@@ -86,8 +86,15 @@ elif pagina == "Predicciones":
 
         st.success(f"✅ Predicción: **{especie}**")
 
-        if hasattr(modelo, "predict_proba"):
+               if hasattr(modelo, "predict_proba"):
             proba = modelo.predict_proba(X_nuevo)[0]
-            proba_df = pd.DataFrame([proba], columns=iris.target_names)
+
+            # Ajustar nombres de clases al número de probabilidades
+            n_clases = len(proba)
+            nombres_clases = iris.target_names[:n_clases]
+
+            proba_df = pd.DataFrame([proba], columns=nombres_clases)
+
             st.write("Probabilidades por clase:")
             st.bar_chart(proba_df.T)
+
