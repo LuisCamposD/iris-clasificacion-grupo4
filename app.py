@@ -68,7 +68,7 @@ MODELOS = {
 with st.sidebar:
     # Puedes cambiar esta URL por el logo de tu grupo / ISIL si lo subes a internet
     st.image(
-        "https://upload.wikimedia.org/wikipedia/commons/4/4f/Iris_versicolor_3.jpg",
+        "logo_iris.png",
         use_column_width=True,
     )
     st.markdown("**Aplicación de Modelo de Clasificación**")
@@ -136,7 +136,7 @@ if pagina == "Introducción":
 
     with col2:
         st.image(
-            "https://miro.medium.com/v2/resize:fit:720/format:webp/1*d1W_3ayT8CXOOWjK-UQPlw.png",
+            "iris_mediciones.png",
             caption="Ejemplo de mediciones en el Iris (sépalo y pétalo).",
             use_column_width=True,
         )
